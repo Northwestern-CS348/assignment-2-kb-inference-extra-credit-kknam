@@ -142,6 +142,76 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        explain = ""
+
+        if isinstance(fact_or_rule, Fact):
+            if self.kb_ask(fact_or_rule):
+                fact_or_rule = self._get_fact(fact_or_rule)
+                explain += "fact: "
+                explain += fact_or_rule.statement.__str__()
+                if fact_or_rule.asserted:
+                    explain += " ASSERTED"
+
+                return self.kb_explain_helper(fact_or_rule, explain, 1)
+
+            else:
+                return "Fact is not in the KB"
+
+        elif isinstance(fact_or_rule, Rule):
+            if fact_or_rule in self.rules:
+                fact_or_rule = self._get_rule(fact_or_rule)
+                explain += "rule: ("
+                for statement in fact_or_rule.lhs:
+                    explain = explain + statement.__str__() + ", "
+
+                explain = explain[:-2] + ") -> " + fact_or_rule.rhs.__str__()
+                if fact_or_rule.asserted:
+                    explain += " ASSERTED"
+
+                return self.kb_explain_helper(fact_or_rule, explain, 1)
+
+            else:
+                return "Rule is not in the KB"
+
+        else:
+            return False
+
+    def kb_explain_helper(self, fact_or_rule, explain, indent):
+        explain_string = explain
+
+        for f_r in fact_or_rule.supported_by:
+            if isinstance(f_r, Fact):
+                explain_string += "\n"
+                for x in range(indent):
+                    explain_string += "  "
+                explain_string += "SUPPORTED BY\n"
+
+                for x in range(indent+1):
+                    explain_string += "  "
+
+                explain_string += "fact: "
+                explain_string += f_r.statement.__str__()
+                if f_r.asserted:
+                    explain_string += " ASSERTED"
+
+                explain_string = self.kb_explain_helper(f_r, explain_string, indent+2)
+
+            if isinstance(f_r, Rule):
+                explain_string += "\n"
+                for x in range(indent+1):
+                    explain_string += "  "
+
+                explain_string += "rule: ("
+                for statement in f_r.lhs:
+                    explain_string = explain_string + statement.__str__() + ", "
+
+                explain_string = explain_string[:-2] + ") -> " + f_r.rhs.__str__()
+                if f_r.asserted:
+                    explain_string += " ASSERTED"
+
+                explain_string = self.kb_explain_helper(f_r, explain_string, indent+2)
+
+        return explain_string
 
 
 class InferenceEngine(object):
